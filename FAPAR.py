@@ -165,6 +165,8 @@ MAP = {
 }
 PATH = 'C:\\Users\\kosiya\\Downloads\\Science\\Source\\' + MAP[LOCATION] + '\\'
 
+print('[DEBUG] Passed ' + MAP[LOCATION] + ' location')
+
 metadata = {}
 parse_metadata(PATH)
 
@@ -173,8 +175,9 @@ phi = float(metadata['SUN_AZIMUTH'])*pi/180
 Ov = 0
 #!!! Ov -> 0, but Ov != 0
 
-if ('1EARTH_SUN_DISTANCE' in metadata.keys()):
+if ('EARTH_SUN_DISTANCE' in metadata.keys()):
     dsol = float(metadata['EARTH_SUN_DISTANCE'])
+    print('\tParsed earth_sun_distance: ', dsol)
 else:
     y, m, d = (metadata['DATE_ACQUIRED']).split('-')
     y, m, d = int(y), int(m), int(d)
@@ -193,21 +196,26 @@ else:
 
     #dsol  = 1.00014 - 0.01672 * cos(2*pi * (DOY - 4) / 365.256363)
     dsol = 1.00014 - 0.01671 * cos(2*pi * (DOY - 3.4532868) / 365.256363)
+    print('\tCalculated earth_sun_distance ', dsol)
 
 gain = [float(metadata['RADIANCE_MULT_BAND_1']), float(metadata['RADIANCE_MULT_BAND_3']), float(metadata['RADIANCE_MULT_BAND_4'])]
 offset = [float(metadata['RADIANCE_ADD_BAND_1']), float(metadata['RADIANCE_ADD_BAND_3']), float(metadata['RADIANCE_ADD_BAND_4'])]
+
+print('\tParsed gain and offset')
+print('[DEBUG] Metadata parsed successfully')
 
 img_B1 = cv2.imread(PATH + 'B1.tif', cv2.IMREAD_GRAYSCALE)
 img_B3 = cv2.imread(PATH + 'B3.tif', cv2.IMREAD_GRAYSCALE)
 img_B4 = cv2.imread(PATH + 'B4.tif', cv2.IMREAD_GRAYSCALE)
 
+#print chosen img[i][j] fapar index
 if (DEBUG_MODE):
     i, j = 4000, 5000
-    print(test__L7OF(img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)))
+    print('[DEBUG MODE]', test__L7OF(img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)))
     exit(0)
 
 img_fapar = cv2.imread(PATH + 'B4.tif', cv2.IMREAD_COLOR)
-print('Images created')
+print('[DEBUG] Images created')
 
 start = time.time()
 for i in range(len(img_fapar)):
@@ -216,12 +224,12 @@ for i in range(len(img_fapar)):
         if (b == 0 and r == 0 and n == 0): img_fapar[i][j] = [255, 255, 255]
         else: img_fapar[i][j] = L7OF(b, r, n)
 
-print('Images parsed')
+print('[DEBUG] Images parsed')
 end = time.time()
 
-print("Elapsed time: " + str(end - start))
+print("[DEBUG] Elapsed time: " + str(end - start))
 
 winsound.MessageBeep()
 
 cv2.imwrite('C:\\Users\\kosiya\\Downloads\\Science\\Source\\FAPAR3d_' + MAP[LOCATION] + '.jpeg', img_fapar)
-print('Image saved')
+print('[DEBUG] Image saved')
