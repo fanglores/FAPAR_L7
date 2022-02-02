@@ -177,7 +177,7 @@ Ov = 0
 
 if ('EARTH_SUN_DISTANCE' in metadata.keys()):
     dsol = float(metadata['EARTH_SUN_DISTANCE'])
-    print('\tParsed earth_sun_distance: ', dsol)
+    print('\t\tParsed earth_sun_distance: ', dsol)
 else:
     y, m, d = (metadata['DATE_ACQUIRED']).split('-')
     y, m, d = int(y), int(m), int(d)
@@ -196,12 +196,12 @@ else:
 
     #dsol  = 1.00014 - 0.01672 * cos(2*pi * (DOY - 4) / 365.256363)
     dsol = 1.00014 - 0.01671 * cos(2*pi * (DOY - 3.4532868) / 365.256363)
-    print('\tCalculated earth_sun_distance ', dsol)
+    print('\t\tCalculated earth_sun_distance ', dsol)
 
 gain = [float(metadata['RADIANCE_MULT_BAND_1']), float(metadata['RADIANCE_MULT_BAND_3']), float(metadata['RADIANCE_MULT_BAND_4'])]
 offset = [float(metadata['RADIANCE_ADD_BAND_1']), float(metadata['RADIANCE_ADD_BAND_3']), float(metadata['RADIANCE_ADD_BAND_4'])]
 
-print('\tParsed gain and offset')
+print('\t\tParsed gain and offset:', gain, offset)
 print('[DEBUG] Metadata parsed successfully')
 
 img_B1 = cv2.imread(PATH + 'B1.tif', cv2.IMREAD_GRAYSCALE)
@@ -211,7 +211,7 @@ img_B4 = cv2.imread(PATH + 'B4.tif', cv2.IMREAD_GRAYSCALE)
 #print chosen img[i][j] fapar index
 if (DEBUG_MODE):
     i, j = 4000, 5000
-    print('[DEBUG MODE]', test__L7OF(img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)))
+    print('[DEBUG MODE] for i =', i, '; j =', j, 'fapar is', test__L7OF(img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)))
     exit(0)
 
 img_fapar = cv2.imread(PATH + 'B4.tif', cv2.IMREAD_COLOR)
