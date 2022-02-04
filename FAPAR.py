@@ -224,7 +224,7 @@ results = [0, 0]
 
 def f1():
     mf1 = cf1 = 0
-    print('\t\t[THREAD] First thread engaged')
+    print('[THREAD] First thread engaged')
     for i in range(0, len(img_fapar)//2):
         for j in range(len(img_fapar[0])):
             b, r, n = img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)
@@ -236,12 +236,12 @@ def f1():
                 if (not (type(tmp) is str)): mf1 += tmp
                 cf1 += 1
 
-    print('\t\t[THREAD] First thread completed it`s work with result:', mf1 / cf1)
+    print('[THREAD] First thread completed it`s work with result:', mf1 / cf1)
     results[0] = mf1 / cf1
 
 def f2():
     mf2 = cf2 = 0
-    print('\t\t[THREAD] Second thread engaged')
+    print('[THREAD] Second thread engaged')
     for i in range(len(img_fapar)//2, len(img_fapar)):
         for j in range(len(img_fapar[0])):
             b, r, n = img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)
@@ -253,12 +253,14 @@ def f2():
                 if (not (type(tmp) is str)): mf2 += tmp
                 cf2 += 1
 
-    print('Second thread completed it`s work with result:', mf2 / cf2)
+    print('[THREAD] Second thread completed it`s work with result:', mf2 / cf2)
     results[1] = mf2 / cf2
 
 
 th1 = threading.Thread(target=f1)
 th2 = threading.Thread(target=f2)
+
+print('[DEBUG] Starting time:', time.strftime("%H:%M:%S", time.gmtime()))
 
 th1.start()
 th2.start()
