@@ -2,6 +2,7 @@ from math import *
 import cv2
 import winsound
 import time
+import threading
 
 #0 - for g0, 1 - g1, 2 - g2
 l = {
@@ -100,6 +101,7 @@ def L7OF(blue, red, nir):
     if (0.75 < fapar < 1): return [0, 100 - 10*int(4*(fapar - 0.75) / 0.25), 0]
     if (1 <= fapar): return [0, 60, 0]
 
+#function for debugging
 def test__L7OF(blue, red, nir):
     ro_star_1 = ro_star(0, blue)
     ro_star_3 = ro_star(1, red)
@@ -153,7 +155,7 @@ def parse_metadata(path):
                     metadata[key] = val
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Main~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 LOCATION = 5
 MAP = {
@@ -173,7 +175,7 @@ parse_metadata(PATH)
 Oo = (90 - float(metadata['SUN_ELEVATION']))*pi/180
 phi = float(metadata['SUN_AZIMUTH'])*pi/180
 Ov = 0
-#!!! Ov -> 0, but Ov != 0
+#!!! lim(Ov) = 0, but Ov != 0
 
 if ('EARTH_SUN_DISTANCE' in metadata.keys()):
     dsol = float(metadata['EARTH_SUN_DISTANCE'])
@@ -217,12 +219,56 @@ if (DEBUG_MODE):
 img_fapar = cv2.imread(PATH + 'B4.tif', cv2.IMREAD_COLOR)
 print('[DEBUG] Images created')
 
+global results
+results = [0, 0]
+
+def f1():
+    mf1 = cf1 = 0
+    print('\t\t[THREAD] First thread engaged')
+    for i in range(0, len(img_fapar)//2):
+        for j in range(len(img_fapar[0])):
+            b, r, n = img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)
+            if (b == 0 and r == 0 and n == 0):
+                img_fapar[i][j] = [255, 255, 255]
+            else:
+                tmp = test__L7OF(b, r, n)
+                # img_fapar[i][j] = tmp
+                if (not (type(tmp) is str)): mf1 += tmp
+                cf1 += 1
+
+    print('\t\t[THREAD] First thread completed it`s work with result:', mf1 / cf1)
+    results[0] = mf1 / cf1
+
+def f2():
+    mf2 = cf2 = 0
+    print('\t\t[THREAD] Second thread engaged')
+    for i in range(len(img_fapar)//2, len(img_fapar)):
+        for j in range(len(img_fapar[0])):
+            b, r, n = img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)
+            if (b == 0 and r == 0 and n == 0):
+                img_fapar[i][j] = [255, 255, 255]
+            else:
+                tmp = test__L7OF(b, r, n)
+                # img_fapar[i][j] = tmp
+                if (not (type(tmp) is str)): mf2 += tmp
+                cf2 += 1
+
+    print('Second thread completed it`s work with result:', mf2 / cf2)
+    results[1] = mf2 / cf2
+
+
+th1 = threading.Thread(target=f1)
+th2 = threading.Thread(target=f2)
+
+th1.start()
+th2.start()
+
 start = time.time()
-for i in range(len(img_fapar)):
-    for j in range(len(img_fapar[0])):
-        b, r, n = img_B1[i][j].astype(float), img_B3[i][j].astype(float), img_B4[i][j].astype(float)
-        if (b == 0 and r == 0 and n == 0): img_fapar[i][j] = [255, 255, 255]
-        else: img_fapar[i][j] = L7OF(b, r, n)
+
+th1.join()
+th2.join()
+
+print(results)
 
 print('[DEBUG] Images parsed')
 end = time.time()
@@ -233,3 +279,4 @@ winsound.MessageBeep()
 
 cv2.imwrite('C:\\Users\\kosiya\\Downloads\\Science\\Source\\FAPAR3d_' + MAP[LOCATION] + '.jpeg', img_fapar)
 print('[DEBUG] Image saved')
+#print('Mean fapar value:', mean_fapar/count_fapar)
