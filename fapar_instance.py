@@ -22,6 +22,12 @@ l
 (PAN)   Band 8 Panchromatic (PAN) (0.52 - 0.90 µm) 15 m
 '''
 
+
+def image_thread(path):
+    obj = Fapar(path)
+    obj.build('value')
+
+
 class Fapar:
     # 0 - for g0, 1 - g1, 2 - g2
     l = {
@@ -51,7 +57,7 @@ class Fapar:
     E0 = [1969.0, 1551.0, 1044.0]
 
     '''
-    non-sstatic used variables
+    non-static used variables
     path - path to the images
     metadata - metadata from mtl file
     Oo, phi, Ov, dsol - angles and distance
@@ -122,6 +128,7 @@ class Fapar:
 
             #will used variables
             self.img_fapar = cv2.imread(path + 'B1.tif', cv2.IMREAD_COLOR)
+            #self.arr_fapar = [['']*len(self.img_B1[0]) for i in range(len(self.img_B1))]
             self.mean_fapar = None
 
             print('[DEBUG] Init successfull')
@@ -129,8 +136,9 @@ class Fapar:
             print('[ERROR] Error during init procedure')
 
     def get(self, i, j):
+        b, r, n = self.img_B1[i][j].astype(float), self.img_B3[i][j].astype(float), self.img_B4[i][j].astype(float)
+        return self.__L7OF_value(b, r, n)
         #recalculating method (add pull from exsisting fapar image?)
-        return 1
 
     def __del__(self):
         if(multiprocessing.current_process().name == 'MainProcess'):
@@ -140,7 +148,7 @@ class Fapar:
             except:
                 print('[ERROR] Error while saving image')
 
-    def build(self, mode, st=1, en=1, val=None, index=None):
+    def build(self, mode, st=1, en=1):
         print('\t[THREAD] Thread ' + multiprocessing.current_process().name + ' engaged')
 
         st, en = len(self.img_fapar)*(st - 1)//en, len(self.img_fapar)*st//en
@@ -160,20 +168,18 @@ class Fapar:
             for i in range(st, en):
                 for j in range(len(self.img_fapar[0])):
                     b, r, n = self.img_B1[i][j].astype(float), self.img_B3[i][j].astype(float), self.img_B4[i][j].astype(float)
-                    if b == 0 and r == 0 and n == 0:
-                        continue
-                    else:
-                        tmp = self.__L7OF_value(b, r, n)
-                        if not (type(tmp) is str):
-                            mean_fapar += tmp
-                            count_fapar += 1
+                    tmp = self.__L7OF_value(b, r, n)
+                    if not (type(tmp) is str):
+                        mean_fapar += tmp
+                        count_fapar += 1
 
             #mean_fapar is not updating
-            print('Saving data', mean_fapar/count_fapar)
-            if(multiprocessing.current_process().name == 'MainProcess'):
+            if multiprocessing.current_process().name == 'MainProcess':
                 self.mean_fapar = mean_fapar / count_fapar
             else:
-                val[index] = mean_fapar / count_fapar
+                f = open(self.path + 'fapar_value' + multiprocessing.current_process().name + '.txt', "w")
+                f.write(str(mean_fapar/count_fapar))
+                f.close()
         else:
             print('[ERROR] Error incorrect mode')
 
@@ -261,11 +267,11 @@ class Fapar:
 
         blue, red, nir = ro_star_1, ro_star_3, ro_star_4
 
-        if (blue <= 0 or red <= 0 or nir <= 0): return 'bad data (1)'
-        if (blue >= 0.257752 or red >= 0.48407 or nir >= 0.683928): 'cloud, snow, ice (2)'
+        if (blue <= 0 or red <= 0 or nir <= 0): return '<bad_data(1)>'
+        if (blue >= 0.257752 or red >= 0.48407 or nir >= 0.683928): '<cloud_snow_ice(2)>'
         if ((0 < blue < 0.257752) and (0 < red < 0.48407) and (0 < nir < 0.683928)):
-            if (blue > nir): return 'water, shadow (3)'
-            if ((0 < blue <= nir) and (1.25 * red > nir)): return 'bright surface (4)'
+            if (blue > nir): return '<water_shadow(3)>'
+            if ((0 < blue <= nir) and (1.25 * red > nir)): return '<bright_surface(4)>'
 
         ro_tilda_1 = ro_star_1 / self.__F(1)
         ro_tilda_3 = ro_star_3 / self.__F(3)
@@ -274,7 +280,7 @@ class Fapar:
         ro_rred = self.__g12(ro_tilda_1, ro_tilda_3, 1)
         ro_rnir = self.__g12(ro_tilda_1, ro_tilda_4, 2)
 
-        if (ro_rred < 0 or ro_rnir < 0): return 'undefined (5)'
+        if (ro_rred < 0 or ro_rnir < 0): return '<undefined(5)>'
 
         fapar = self.__g0(ro_rred, ro_rnir)
 
