@@ -18,19 +18,20 @@ def parse_positions(inp):
     print('2.\t' + cds[0] + '\t\t' + cds[2])
     print('3.\t' + cds[0] + '\t\t' + cds[3])
     print('4.\t' + cds[1] + '\t\t' + cds[3])
-    print('\n\n')
+    print('\n')
 
-def images_threading(number):
-    pool = [None]*number
+
+def images_threading(mode, number):
+    pool = multiprocessing.Pool(processes=3)
     PATH = 'C:\\Users\\kosiya\\Downloads\\Science\\Source_mean\\'
 
     for i in range(number):
-        pool[i] = multiprocessing.Process(target=fapar_instance.image_thread, name=str(i + 1),
-                                          args=(PATH + str(i + 1) + '\\',))
-        pool[i].start()
+        pool.apply_async(fapar_instance.image_thread, args=(PATH + str(i + 1) + '\\', mode, i + 1,))
+        time.sleep(0.5)
 
-    for i in range(number):
-        pool[i].join()
+    pool.close()
+    pool.join()
+
 
 def fapar_threading(instance, build_mode, thread_number=1):
     if not (1 < thread_number < 9):
@@ -61,6 +62,7 @@ if __name__ == '__main__':
 
     parse_positions('485N488N0449E0454E')
 
+    '''
     LOCATION = 1
     MAP = {
         1: 'Moscow',
@@ -73,12 +75,11 @@ if __name__ == '__main__':
     print('[DEBUG] Passed ' + MAP[LOCATION] + ' location')
 
     # obj = fapar_instance.Fapar('C:\\Users\\kosiya\\Downloads\\Science\\Source\\' + MAP[LOCATION] + '\\')
+    '''
 
     # launching multithreading
     print('[DEBUG] Building started. Current time ' + time.strftime("%H:%M:%S", time.localtime()))
-    images_threading(2)
-    # fapar_threading(obj, 'value', 1)
-    print('[DEBUG] Building ended. Current time ' + time.strftime("%H:%M:%S", time.localtime()))
 
-    # other operations
-    # print('Mean fapar', obj.get_mean())
+    images_threading('map', 6)
+
+    print('[DEBUG] Building ended. Current time ' + time.strftime("%H:%M:%S", time.localtime()))
